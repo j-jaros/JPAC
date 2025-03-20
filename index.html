@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>JPAC - Dev</title>
+</head>
+<body>
+
+<!-- Rozwiazanie na: play() failed because the user didn't interact with the document first. -->
+<div id="start_div" onclick="primary_loop(); this.remove()">
+    <p>Wcisnij mnie aby rozpocząć!</p>
+</div>
+
+
+<h1>JPAC <sup>by</sup> <sup class="rainbow">Julian Jaros</sup></h1>
+<h3>Następne odtworzenie komunikatu za: <span class="rainbow" id="timeleft">00:00:00</span></h3>
+
+<h1 class="no">NIE DOTYKAJ PROSZĘ <3</h1>
+
+<b>Ale co to robi?</b>
+<p class="info">JPAC (Julian's Public Annoucement Center) - to pierwsza wersja większego projektu, który docelowo ma
+    usprawnić komunikację między dyrekcją a uczniami TEBu w Opolu. <br><br> Projekt zakłada część rozrywkową oraz
+    edukacyjną -
+    nauczy
+    młodych ludzi tworzenia artykułów oraz redakcji tekstów. <br><br><b>Stay tuned!</b></p>
+
+
+<button id="force_play">ODTWÓRZ TERAZ</button>
+</body>
+
+<style>
+    #start_div {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background-color: black;
+        color: white;
+
+        padding: 50px;
+    }
+
+    :root {
+        --rainbow-color: green;
+    }
+
+    * {
+        transition: color 0.5s, border 0.5s;
+
+        font-size: 1.2rem;
+        font-family: arial, 'sans-serif'
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+
+        width: 100vw;
+        height: 100vh;
+
+        background-color: #18171a;
+        color: white;
+
+        display: flex;
+        flex-flow: column;
+
+        align-items: center;
+    }
+
+    .info {
+        width: 500px;
+        padding: 20px;
+        border: 1px solid var(--rainbow-color);
+        border-radius: 10px;
+    }
+
+    .no {
+        color: red;
+        text-shadow: 0 0 10px red;
+    }
+
+    .rainbow {
+        color: var(--rainbow-color);
+    }
+
+    #force_play {
+        position: absolute;
+        right: 0;
+        font-size: 10px;
+        opacity: 0.1;
+    }
+
+</style>
+
+<script>
+    const time_holder = document.querySelector("#timeleft")
+    const messageDelaySeconds = 600
+    let force_play_flag = false
+    let allow_audio_play = true
+
+    async function primary_loop() {
+        while (true) {
+            for (let seconds = messageDelaySeconds; seconds >= 0; --seconds) {
+                if (force_play_flag) break
+                time_holder.textContent = convertSecondsToHMS(seconds);
+                await new Promise(r => setTimeout(r, 1000))
+            }
+
+            force_play_flag = false
+            time_holder.textContent = "TERAZ!"
+            await play_audio()
+        }
+    }
+
+
+    async function play_audio() {
+        if (!allow_audio_play) return
+        allow_audio_play = false
+
+        let audio = new Audio('./komunikat_drzwi_otwarte.mp3');
+        await new Promise((resolve) => {
+            audio.onended = resolve;
+            audio.play();
+        });
+        time_holder.textContent = convertSecondsToHMS(messageDelaySeconds)
+        allow_audio_play = true
+    }
+
+
+    function convertSecondsToHMS(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = seconds % 60;
+
+        const formattedHours = String(hours).padStart(2, '0');
+        const formattedMinutes = String(minutes).padStart(2, '0');
+        const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+
+        return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+    }
+
+    function force_play() {
+        const conf = confirm("UWAGA: Uzycie tej funkcji zresetuje timer, czy jestes pewien?")
+        if (conf) {
+            force_play_flag = true
+        }
+    }
+
+
+    // LOSOWANIE KOLORKOW - CZYLI CZESC MALO ISTOTNA
+    async function changeRainbowColor() {
+        while (true) {
+            document.querySelector(':root').style.setProperty('--rainbow-color', getRandomColor());
+            await new Promise(r => setTimeout(r, 500))
+        }
+    }
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    changeRainbowColor()
+
+
+    document.querySelector("#force_play").addEventListener('click', force_play)
+</script>
+
+</html>
